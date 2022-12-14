@@ -5,6 +5,7 @@ mod gates;
 
 use bitvec::prelude::*;
 use rand::Rng;
+use fast_math::log2_raw;
 
 // Returns c = x < R
 fn lt_bits(const_r: u8, sh_0: &BitVec<u8>, sh_1: &BitVec<u8>) -> bool {
@@ -27,19 +28,29 @@ fn lt_bits(const_r: u8, sh_0: &BitVec<u8>, sh_1: &BitVec<u8>) -> bool {
         println!();
     }
 
-    // Step 2
-    let mut z_bits_0 = bitvec![u8, Lsb0; 0; gates::M];
-    let mut z_bits_1 = bitvec![u8, Lsb0; 0; gates::M];
-    for i in 0..gates::M {
-        for j in i..gates::M {
-            let (or_0, or_1) = gates::or_gate(z_bits_0[i], y_bits_0[j], z_bits_1[i], y_bits_1[j]);
+    // Step 2 - PreOpL
+    let log_m = log2_raw(gates::M as f32).ceil() as usize;
+    for i in 0..log_m {
+        for j in 0..(gates::M / (1 << (i + 1))) {
+            let y = ((1 << i) + j * (1 << (i + 1))) - 1;
+            for z in 1..(1 << (i + 1)) {
+                if y + z < gates::M {
+                    let idx_y = gates::M - 1 - y;
+                    let (or_0, or_1) = gates::or_gate(
+                        y_bits_0[idx_y], y_bits_0[idx_y - z],
+                        y_bits_1[idx_y], y_bits_1[idx_y - z]
+                    );
 
-            z_bits_0.set(i, or_0);
-            z_bits_1.set(i, or_1);
+                    y_bits_0.set(idx_y - z, or_0);
+                    y_bits_1.set(idx_y - z, or_1);
+                }
+            }
         }
     }
-    z_bits_0.push(false);
-    z_bits_1.push(false);
+    y_bits_0.push(false);
+    y_bits_1.push(false);
+    let z_bits_0 = y_bits_0;
+    let z_bits_1 = y_bits_1;
     if gates::DEBUG {
         println!("\tz_bits_0: {}", z_bits_0);
         println!("\tz_bits_1: {}", z_bits_1);
@@ -47,7 +58,7 @@ fn lt_bits(const_r: u8, sh_0: &BitVec<u8>, sh_1: &BitVec<u8>) -> bool {
         println!();
     }
 
-    // // Step 3
+    // Step 3
     let mut w_bits_0 = bitvec![u8, Lsb0; 0; gates::M];
     let mut w_bits_1 = bitvec![u8, Lsb0; 0; gates::M];
     for i in 0..gates::M {

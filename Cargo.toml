@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 bitvec = "1"
+fast-math = "0.1.1"
 rand = "0.8.5"
