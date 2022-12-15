@@ -1,7 +1,6 @@
 use bitvec::prelude::*;
 use rand::Rng;
 
-pub const DEBUG: bool = false;
 pub const ITER: usize = 100;
 pub const M: usize = 8;  // number of bits
 
@@ -31,7 +30,7 @@ pub fn secret_share(bit_array: &BitVec<u8>) -> (BitVec<u8>, BitVec<u8>) {
     (sh_1, sh_2)
 }
 
-pub fn reconstruct_shares(ss0: &BitVec<u8>, ss1: &BitVec<u8>) -> BitVec<u8> {
+pub fn _reconstruct_shares(ss0: &BitVec<u8>, ss1: &BitVec<u8>) -> BitVec<u8> {
     assert_eq!(ss0.len(), ss1.len());
     let mut reconstructed = BitVec::<u8>::with_capacity(M);
     for (b0, b1) in ss0.iter().zip(ss1.iter()) {
